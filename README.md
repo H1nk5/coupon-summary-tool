@@ -8,12 +8,13 @@
 
 ![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![Pandas](https://img.shields.io/badge/Pandas-150458?style=for-the-badge&logo=pandas&logoColor=white)
+![OpenPyXL](https://img.shields.io/badge/OpenPyXL-217346?style=for-the-badge&logo=microsoftexcel&logoColor=white)
 
 <br>
 
-按日汇总兰考 / 民权的商品和代金券数据，生成带颜色分类的 Excel 报表
+自动解析多地区销售数据 · 按日聚合汇总 · 生成带颜色分类的 Excel 报表
 
-[功能特性](#功能特性) · [快速启动](#快速启动) · [使用说明](#使用说明)
+[功能特性](#功能特性) · [快速启动](#快速启动) · [输入输出](#输入输出) · [项目结构](#项目结构)
 
 </div>
 
@@ -21,42 +22,51 @@
 
 ## 功能特性
 
-- 📅 按日期自动汇总商品数据和代金券数据
-- 🏪 支持兰考、民权两个地区
-- 🎨 Excel 输出带颜色分类，一目了然
-- 🖱️ GUI 界面，操作简单
+| 功能 | 说明 |
+|------|------|
+| 📅 按日汇总 | 自动按日期聚合商品和代金券数据 |
+| 🏪 多地区支持 | 兰考、民权两个地区独立汇总 |
+| 🎨 颜色分类 | Excel 输出按类型着色，一目了然 |
+| 🖱️ GUI 界面 | 图形化操作，无需命令行 |
+| 📦 单文件打包 | 支持 PyInstaller 打包为 exe |
 
 ---
 
 ## 快速启动
 
-### 安装依赖
-
 ```bash
+# 安装依赖
 pip install pandas openpyxl
-```
 
-### 运行
+# 运行
+python 代金券汇总工具.py
 
-```bash
-python main.py
-```
-
-### 打包 exe
-
-```bash
+# 打包 exe
 pip install pyinstaller
-pyinstaller --onefile --windowed --name "代金券汇总工具" main.py
+pyinstaller --onefile --windowed --name "代金券汇总工具" 代金券汇总工具.py
 ```
 
 ---
 
-## 使用说明
+## 输入输出
 
-1. 运行程序，选择输入的 Excel 文件
-2. 选择输出目录
-3. 程序自动按日期和地区汇总
-4. 输出带颜色分类的 Excel 报表
+### 输入格式
+
+Excel 文件，需包含商品名称、代金券金额、地区、日期等字段。
+
+### 输出结果
+
+按日期分 sheet，每个 sheet 包含该日各地区的商品和代金券汇总，不同类型用颜色区分。
+
+---
+
+## 项目结构
+
+```
+coupon-summary-tool/
+├── 代金券汇总工具.py       # 主程序（GUI + 汇总逻辑）
+└── 代金券汇总工具.exe       # 打包后的可执行文件
+```
 
 ---
 
