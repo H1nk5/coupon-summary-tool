@@ -1,65 +1,65 @@
-# 代金券汇总工具
+<div align="center">
 
-按日汇总兰考、民权两个地区的商品和代金券数据，生成带颜色分类的 Excel 报表。
+# 📊 Coupon Summary Tool
 
-## 功能
+**代金券汇总工具 · 按日汇总多地区商品与代金券数据**
 
-- 读取兰考、民权两个 xlsx 数据表
-- 按核销时间按日汇总
-- 自动区分商品（商品类型为 `-`）和代金券（商品类型含"代金券"）
-- 汇总字段：订单实收、软件服务费、商家应得
-- 输出 Excel 带颜色表头：
-  - 绿色：合计列
-  - 黄色：兰考列
-  - 橙色：民权列
+<br>
 
-## 输入数据格式
+![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![Pandas](https://img.shields.io/badge/Pandas-150458?style=for-the-badge&logo=pandas&logoColor=white)
 
-| 核销时间 | 商品类型 | 订单实收金额 | 软件服务费 | 商家应得 |
-|---------|---------|------------|----------|---------|
-| 2026-05-31 21:28:00 | - | 7.90 | -0.2 | 7.7 |
-| 2026-05-31 10:20:28 | 代金券 | 485.00 | -12.13 | 472.87 |
+<br>
 
-## 输出格式
+按日汇总兰考 / 民权的商品和代金券数据，生成带颜色分类的 Excel 报表
 
-```
-日期  | -------- 商品 -------- | -------- 代金券 --------
-      | 合计     | 兰考   | 民权   | 合计     | 兰考   | 民权
-      | 实收 服务费 应得 | ...  | ...  | 实收 服务费 应得 | ...  | ...
-5/1   | 51180  -1293  49887 | ... | ... | 140858 -3522 137335 | ... | ...
-```
+[功能特性](#功能特性) · [快速启动](#快速启动) · [使用说明](#使用说明)
 
-## 使用方式
+</div>
 
-### 方式一：直接运行 exe
+---
 
-下载 `代金券汇总工具.exe`，双击运行，无需安装 Python。
+## 功能特性
 
-### 方式二：运行 Python 脚本
+- 📅 按日期自动汇总商品数据和代金券数据
+- 🏪 支持兰考、民权两个地区
+- 🎨 Excel 输出带颜色分类，一目了然
+- 🖱️ GUI 界面，操作简单
+
+---
+
+## 快速启动
+
+### 安装依赖
 
 ```bash
-pip install customtkinter openpyxl
-python 代金券汇总工具.py
+pip install pandas openpyxl
 ```
 
-## 依赖
+### 运行
 
-- Python 3.10+
-- customtkinter
-- openpyxl
+```bash
+python main.py
+```
 
-## 打包 exe
+### 打包 exe
 
 ```bash
 pip install pyinstaller
-pyinstaller --onefile --windowed --noconsole --name "代金券汇总工具" --add-data "path/to/customtkinter;customtkinter/" 代金券汇总工具.py
+pyinstaller --onefile --windowed --name "代金券汇总工具" main.py
 ```
 
-## 截图
+---
 
-运行程序后：
-1. 点击"浏览"选择兰考表格
-2. 点击"浏览"选择民权表格
-3. 点击"浏览"选择输出位置
-4. 点击"开始汇总"
-5. 等待进度条完成
+## 使用说明
+
+1. 运行程序，选择输入的 Excel 文件
+2. 选择输出目录
+3. 程序自动按日期和地区汇总
+4. 输出带颜色分类的 Excel 报表
+
+---
+
+## 开源许可
+
+MIT © [H1nk5](https://github.com/H1nk5)
