@@ -7,7 +7,6 @@
 <br>
 
 ![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
-![Pandas](https://img.shields.io/badge/Pandas-150458?style=for-the-badge&logo=pandas&logoColor=white)
 ![OpenPyXL](https://img.shields.io/badge/OpenPyXL-217346?style=for-the-badge&logo=microsoftexcel&logoColor=white)
 
 <br>
@@ -36,7 +35,7 @@
 
 ```bash
 # 安装依赖
-pip install pandas openpyxl
+pip install -r requirements.txt
 
 # 运行
 python 代金券汇总工具.py

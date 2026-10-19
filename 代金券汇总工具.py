@@ -2,9 +2,10 @@ import customtkinter as ctk
 from tkinter import filedialog, messagebox
 import openpyxl
 from openpyxl.styles import Font, Alignment, Border, Side, PatternFill
-from datetime import datetime, date
-from collections import defaultdict
+from datetime import datetime
 import threading
+
+from summary_core import aggregate, collect_dates, read_data
 
 ctk.set_appearance_mode("light")
 ctk.set_default_color_theme("blue")
@@ -113,65 +114,47 @@ class App(ctk.CTk):
             self.输出路径.set(path)
 
     def 更新状态(self, text, color="gray"):
+        if threading.current_thread() is not threading.main_thread():
+            self.after(0, lambda: self.更新状态(text, color))
+            return
         self.状态.configure(text=text, text_color=color)
         self.update_idletasks()
 
+    def 更新进度(self, value):
+        self.after(0, lambda: self.进度.set(value))
+
     def 开始(self):
-        if not all([self.兰考路径.get(), self.民权路径.get(), self.输出路径.get()]):
+        paths = (self.兰考路径.get(), self.民权路径.get(), self.输出路径.get())
+        if not all(paths):
             messagebox.showwarning("提示", "请先选择所有文件路径")
             return
         self.按钮.configure(state="disabled")
-        threading.Thread(target=self.执行, daemon=True).start()
+        threading.Thread(target=self.执行, args=paths, daemon=True).start()
 
     def 读取数据(self, filepath):
-        wb = openpyxl.load_workbook(filepath, data_only=True)
-        ws = wb.active
-        data = []
-        for row in ws.iter_rows(min_row=2, values_only=True):
-            if row[0] is None:
-                continue
-            核销时间 = row[0]
-            商品类型 = str(row[1]) if row[1] else ""
-            订单实收 = float(row[2]) if row[2] else 0
-            服务费 = float(row[3]) if row[3] else 0
-            商家应得 = float(row[4]) if row[4] else 0
-            if isinstance(核销时间, datetime):
-                d = 核销时间.date()
-            elif isinstance(核销时间, date):
-                d = 核销时间
-            else:
-                d = datetime.strptime(str(核销时间)[:10], "%Y-%m-%d").date()
-            is_代金券 = "代金券" in 商品类型
-            data.append((d, is_代金券, 订单实收, 服务费, 商家应得))
-        return data
+        return read_data(filepath)
 
     def 聚合(self, data):
-        result = defaultdict(lambda: [0, 0, 0])
-        for d, is_代金券, 实收, 服务费, 商家应得 in data:
-            key = (d, is_代金券)
-            result[key][0] += 实收
-            result[key][1] += 服务费
-            result[key][2] += 商家应得
-        return result
+        return aggregate(data)
 
-    def 执行(self):
+    def 执行(self, 兰考路径, 民权路径, 输出路径):
         try:
             self.更新状态("读取兰考数据...", "#1a73e8")
-            self.进度.set(0.1)
-            兰考 = self.读取数据(self.兰考路径.get())
+            self.更新进度(0.1)
+            兰考 = self.读取数据(兰考路径)
 
             self.更新状态("读取民权数据...", "#1a73e8")
-            self.进度.set(0.25)
-            民权 = self.读取数据(self.民权路径.get())
+            self.更新进度(0.25)
+            民权 = self.读取数据(民权路径)
 
             self.更新状态("汇总中...", "#1a73e8")
-            self.进度.set(0.4)
+            self.更新进度(0.4)
             兰考_agg = self.聚合(兰考)
             民权_agg = self.聚合(民权)
-            all_dates = sorted(set(k[0] for k in list(兰考_agg.keys()) + list(民权_agg.keys())))
+            all_dates = collect_dates(兰考_agg, 民权_agg)
 
             self.更新状态("生成表格...", "#1a73e8")
-            self.进度.set(0.55)
+            self.更新进度(0.55)
 
             wb = openpyxl.Workbook()
             ws = wb.active
@@ -261,21 +244,21 @@ class App(ctk.CTk):
                     c.border = thin_border
                     c.number_format = "#,##0.00"
 
-                self.进度.set(0.55 + 0.4 * (i + 1) / total)
+                self.更新进度(0.55 + 0.4 * (i + 1) / total)
 
             self.更新状态("保存中...", "#1a73e8")
-            self.进度.set(0.95)
-            wb.save(self.输出路径.get())
+            self.更新进度(0.95)
+            wb.save(输出路径)
 
-            self.进度.set(1.0)
+            self.更新进度(1.0)
             self.更新状态(f"完成! {total} 天 | {all_dates[0]} ~ {all_dates[-1]}", "#16a34a")
-            messagebox.showinfo("完成", f"汇总完成!\n共 {total} 天\n{all_dates[0]} ~ {all_dates[-1]}\n\n已保存: {self.输出路径.get()}")
+            self.after(0, lambda: messagebox.showinfo("完成", f"汇总完成!\n共 {total} 天\n{all_dates[0]} ~ {all_dates[-1]}\n\n已保存: {输出路径}"))
 
         except Exception as e:
             self.更新状态(f"出错: {e}", "#dc2626")
-            messagebox.showerror("错误", str(e))
+            self.after(0, lambda error=str(e): messagebox.showerror("错误", error))
         finally:
-            self.按钮.configure(state="normal")
+            self.after(0, lambda: self.按钮.configure(state="normal"))
 
 
 if __name__ == "__main__":
