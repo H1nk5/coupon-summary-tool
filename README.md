@@ -40,10 +40,15 @@ pip install -r requirements.txt
 # 运行
 python 代金券汇总工具.py
 
+# 无界面批处理
+python cli.py --lankao 兰考.xlsx --minquan 民权.xlsx --output 代金券汇总表.xlsx
+
 # 打包 exe
 pip install pyinstaller
 pyinstaller --onefile --windowed --name "代金券汇总工具" 代金券汇总工具.py
 ```
+
+GitHub Actions 的 `Windows Release Artifacts` 可手动运行，也会在推送 `v*` 标签时生成 GUI 与命令行两个 Windows EXE 供下载。
 
 ---
 

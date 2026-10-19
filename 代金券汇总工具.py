@@ -1,11 +1,8 @@
 import customtkinter as ctk
 from tkinter import filedialog, messagebox
-import openpyxl
-from openpyxl.styles import Font, Alignment, Border, Side, PatternFill
-from datetime import datetime
 import threading
 
-from summary_core import aggregate, collect_dates, read_data
+from summary_core import aggregate, generate_report, read_data
 
 ctk.set_appearance_mode("light")
 ctk.set_default_color_theme("blue")
@@ -139,120 +136,16 @@ class App(ctk.CTk):
 
     def 执行(self, 兰考路径, 民权路径, 输出路径):
         try:
-            self.更新状态("读取兰考数据...", "#1a73e8")
-            self.更新进度(0.1)
-            兰考 = self.读取数据(兰考路径)
-
-            self.更新状态("读取民权数据...", "#1a73e8")
-            self.更新进度(0.25)
-            民权 = self.读取数据(民权路径)
-
-            self.更新状态("汇总中...", "#1a73e8")
-            self.更新进度(0.4)
-            兰考_agg = self.聚合(兰考)
-            民权_agg = self.聚合(民权)
-            all_dates = collect_dates(兰考_agg, 民权_agg)
-
-            self.更新状态("生成表格...", "#1a73e8")
-            self.更新进度(0.55)
-
-            wb = openpyxl.Workbook()
-            ws = wb.active
-            ws.title = "汇总"
-
-            header_font = Font(name="等线", size=11, bold=True)
-            header_align = Alignment(horizontal="center", vertical="center")
-            data_font = Font(name="等线", size=11)
-            data_align = Alignment(horizontal="right", vertical="center")
-            thin_side = Side(style="thin")
-            thin_border = Border(left=thin_side, right=thin_side, top=thin_side, bottom=thin_side)
-
-            # 颜色定义
-            green_fill = PatternFill(start_color="FF92D050", end_color="FF92D050", fill_type="solid")
-            yellow_fill = PatternFill(start_color="FFFFFF00", end_color="FFFFFF00", fill_type="solid")
-            orange_fill = PatternFill(start_color="FFFFC000", end_color="FFFFC000", fill_type="solid")
-
-            def set_cell(row, col, value, font=None, align=None, fill=None, border=None, num_fmt=None):
-                cell = ws.cell(row=row, column=col, value=value)
-                if font: cell.font = font
-                if align: cell.alignment = align
-                if fill: cell.fill = fill
-                if border: cell.border = border
-                if num_fmt: cell.number_format = num_fmt
-                return cell
-
-            ws.merge_cells("B1:J1")
-            set_cell(1, 2, "商品", header_font, header_align)
-            ws.merge_cells("K1:S1")
-            set_cell(1, 11, "代金券", header_font, header_align)
-
-            ws.merge_cells("A2:A3")
-            set_cell(2, 1, "日期", header_font, header_align, border=thin_border)
-            set_cell(3, 1, None, border=thin_border)
-
-            # Row 2: 合计/兰考/民权 with colors
-            groups = [
-                ("B2:D2", "合计", green_fill), ("E2:G2", "兰考", yellow_fill), ("H2:J2", "民权", orange_fill),
-                ("K2:M2", "合计", green_fill), ("N2:P2", "兰考", yellow_fill), ("Q2:S2", "民权", orange_fill),
-            ]
-            for merge_range, label, fill in groups:
-                ws.merge_cells(merge_range)
-                col = openpyxl.utils.cell.column_index_from_string(merge_range[0])
-                set_cell(2, col, label, header_font, header_align, fill)
-
-            # Row 3: column headers with matching colors
-            col3_fills = [green_fill]*3 + [yellow_fill]*3 + [orange_fill]*3 + [green_fill]*3 + [yellow_fill]*3 + [orange_fill]*3
-            cols3 = ["订单实收", "服务费", "商家应得"] * 6
-            for j, (label, fill) in enumerate(zip(cols3, col3_fills)):
-                set_cell(3, 2 + j, label, header_font, header_align, fill)
-
-            # Borders for header rows
-            for r in range(1, 4):
-                for c in range(1, 20):
-                    ws.cell(row=r, column=c).border = thin_border
-
-            # Column widths
-            ws.column_dimensions["A"].width = 8.3
-            ws.column_dimensions["B"].width = 16.3
-            ws.column_dimensions["K"].width = 16.3
-            for col in "CDEFGHIJLMNOPQRS":
-                ws.column_dimensions[col].width = 13
-
-            # Data rows
-            total = len(all_dates)
-            for i, d in enumerate(all_dates):
-                row = 4 + i
-                cell = ws.cell(row=row, column=1, value=datetime(d.year, d.month, d.day))
-                cell.number_format = "M/D"
-                cell.font = header_font
-                cell.alignment = header_align
-                cell.border = thin_border
-
-                lk_g = 兰考_agg.get((d, False), [0, 0, 0])
-                mq_g = 民权_agg.get((d, False), [0, 0, 0])
-                tot_g = [lk_g[j] + mq_g[j] for j in range(3)]
-
-                lk_c = 兰考_agg.get((d, True), [0, 0, 0])
-                mq_c = 民权_agg.get((d, True), [0, 0, 0])
-                tot_c = [lk_c[j] + mq_c[j] for j in range(3)]
-
-                all_vals = tot_g + lk_g + mq_g + tot_c + lk_c + mq_c
-                for j, val in enumerate(all_vals):
-                    c = ws.cell(row=row, column=2 + j, value=round(val, 2))
-                    c.font = data_font
-                    c.alignment = data_align
-                    c.border = thin_border
-                    c.number_format = "#,##0.00"
-
-                self.更新进度(0.55 + 0.4 * (i + 1) / total)
-
-            self.更新状态("保存中...", "#1a73e8")
-            self.更新进度(0.95)
-            wb.save(输出路径)
-
-            self.更新进度(1.0)
-            self.更新状态(f"完成! {total} 天 | {all_dates[0]} ~ {all_dates[-1]}", "#16a34a")
-            self.after(0, lambda: messagebox.showinfo("完成", f"汇总完成!\n共 {total} 天\n{all_dates[0]} ~ {all_dates[-1]}\n\n已保存: {输出路径}"))
+            self.更新状态("正在读取、汇总并生成表格...", "#1a73e8")
+            result = generate_report(兰考路径, 民权路径, 输出路径, self.更新进度)
+            self.更新状态(
+                f"完成! {result['days']} 天 | {result['first_date']} ~ {result['last_date']}",
+                "#16a34a",
+            )
+            self.after(0, lambda: messagebox.showinfo(
+                "完成",
+                f"汇总完成!\n共 {result['days']} 天\n{result['first_date']} ~ {result['last_date']}\n\n已保存: {输出路径}",
+            ))
 
         except Exception as e:
             self.更新状态(f"出错: {e}", "#dc2626")

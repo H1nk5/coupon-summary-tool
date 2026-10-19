@@ -1,0 +1,29 @@
+name: Windows Release Artifacts
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - run: pip install -r requirements.txt pyinstaller==6.16.0
+      - run: python -m unittest discover -s tests -v
+      - run: pyinstaller --noconfirm --clean --onefile --windowed --name "代金券汇总工具" "代金券汇总工具.py"
+      - run: pyinstaller --noconfirm --clean --onefile --name "voucher-summary-cli" cli.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coupon-summary-windows
+          path: |
+            dist/代金券汇总工具.exe
+            dist/voucher-summary-cli.exe
